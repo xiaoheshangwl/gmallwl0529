@@ -19,6 +19,11 @@ public class CookieUtils {
     private CookieUtils() {
     }
 
+    public static String confirmTokenORCookieValue(){
+
+        return "";
+    }
+
     public static Map<String,Object> resolveTokenData(String token){
         String[] split = token.split("\\.");
         if(split != null && split.length==3){
