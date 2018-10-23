@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="attrDlg" class="easyui-dialog" title="编辑属性" style="width:600px;height:500px;"
+     closed="true" data-options="iconCls:'icon-save',resizable:true,modal:true" buttons="#bb" >
+    <form id="attrForm">
+        <br/>
+        <label>属性名称:</label>
+        <input  id="attrName" name="attrName" class="easyui-textbox" data-options="" style="width:100px"/>
+        <input  id="attrId" name="id" type="hidden"  />
+        <br/><br/>
+        <table id="attrInfoValueTable" class="easyui-datagrid" title="属性值列表"></table>
+
+
+    </form>
+</div>
+
+<div id="bb">
+    <a href="#" class="easyui-linkbutton" onclick="saveAttrInfoAndValue()">保存</a>
+    <a href="#" class="easyui-linkbutton" onclick="$('#attrDlg').dialog('close')">关闭</a>
+</div>
+</body>
+<script language="javascript">
+    /*<![CDATA[*/
+    function saveAttrInfoAndValue(){
+        var attrInfoAndValue = {};
+        attrInfoAndValue.id = $("#attrId").val();
+        attrInfoAndValue.attrName = $("#attrName").textbox('getValue');
+        attrInfoAndValue.attrValues = $("#attrInfoValueTable").datagrid('getRows');
+        var jsonStr=JSON.stringify(attrInfoAndValue);
+        $.ajax({
+            url:'attr/updates',
+            type:'POST',
+            contentType:'application/json', //必须写
+            data:jsonStr,
+            processData:false,  //不默认处理数据，否则数据就变成了k=v的方式
+            success:function(data){
+                 alert(data);
+                $("#attrDlg").dialog('close');
+                refreshTable();
+                $.messager.alert('成功','恭喜,成功了');
+            },
+            error:function(){
+               alert("有点不对哟。。。");
+            }
+        })
+    }
+
+
+    var editIndex = undefined;
+    function endEditing1(){
+        if (editIndex == undefined){return true}
+        if ($('#attrInfoValueTable').datagrid('validateRow', editIndex)){
+            $('#attrInfoValueTable').datagrid('endEdit', editIndex);
+            editIndex = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function onClickCell1(index, field){
+        if (endEditing1()){
+            $('#attrInfoValueTable').datagrid('selectRow', index)
+                .datagrid('editCell', {index:index,field:field});
+            editIndex = index;
+        }
+    }
+
+    /*]]>*/
+</script>
+</html>

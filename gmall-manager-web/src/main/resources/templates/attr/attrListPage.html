@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>主界面</title>
+</head>
+<body >
+<div class="easyui-panel" title=""  data-options="border:true">
+
+
+    <table id="attrInfoTable" class="easyui-datagrid" title="属性列表"
+           data-options="singleSelect:true,method:'get' ,toolbar:'#tb'">
+        <thead>
+        <tr>
+            <th data-options="field:'id'" width="20%">属性id </th>
+            <th data-options="field:'attrName'" width="80%">属性名</th>
+        </tr>
+        </thead>
+    </table>
+    <div id="tb" style="padding:5px;height:auto">
+        <div style="margin-bottom:5px">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="addAttrInfo()" onclick="addAttrInfo()">添加</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onclick="editAttrInfo()" onclick="editAttrInfo()">编辑</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-remove" plain="true">删除</a>
+        </div>
+        <div>
+            一级分类：
+            <select id="ctg1ForAttrList"   class="easyui-combobox"   style="width:100px" data-options="valueField:'id',textField:'name',url:'baseCatalog/1/list.json',
+              onSelect:function(rec){
+
+              $('#ctg2ForAttrList').combobox('reload','baseCatalog/2/list.json?id='+rec.id);
+               $('#ctg2ForAttrList').combobox('clear');
+                  $('#ctg3ForAttrList').combobox('clear');
+            }"></select>
+
+            二级分类：
+            <select name="ctg2ForAttrList" id="ctg2ForAttrList"  class="easyui-combobox" data-options="valueField:'id',textField:'name',
+             onSelect:function(rec){
+             $('#ctg3ForAttrList').combobox('reload','baseCatalog/3/list.json?id='+rec.id);
+             $('#ctg3ForAttrList').combobox('clear');
+            }" style="width:100px"></select>
+            三级分类：
+            <select name="ctg3ForAttrList" id="ctg3ForAttrList"  class="easyui-combobox" data-options="valueField:'id',textField:'name' ,onSelect:function(rec){
+              $('#attrInfoTable').datagrid({
+                url:'baseCatalog/attrs.json?id='+rec.id
+               });
+            }" style="width:100px" ></select>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-search" onclick="refreshTable()">刷新属性列表</a>
+
+        </div>
+    </div>
+</div>
+<!--引入其它页面，jsp:include
+th:include="" 里面写视图名，将目标内容引入进来-->
+ <div th:include="attr/attrEdit"></div>
+ <div th:include="attr/attrAdd"></div>
+
+</body>
+<script language="javascript">
+    /*<![CDATA[*/
+    function refreshTable(){
+        var c3Id = $("#ctg3ForAttrList").combobox('getValue');
+        $('#attrInfoTable').datagrid({
+            url:'baseCatalog/attrs.json?id='+c3Id
+        });
+    }
+    function addAttrInfo() {
+        if(getCatalog3Info()!=null){
+            if(getAttrInfo()!=null){
+                $('#attrAddDlg').dialog('open');
+                var attrInfo = getAttrInfo();
+                $("#attrAddId").val(attrInfo.id);
+                $("#attrAddName").textbox('setValue',attrInfo.attrName);
+
+                $("#AddInfoValueTable").datagrid({
+
+                    singleSelect:true,
+                    onDblClickCell:onClickCell,
+                    columns:[[
+                        {field:'id',title:'属性值id',width:100},
+                        {field:'valueName',title:'属性值名称',width:100,
+                            editor:{
+                                type: 'validatebox', options: { required: true}  //必填项
+                                //options指的是对这个type组件的设置
+                                //type：能写的值就是form里面的表单组件名
+                                //options：能写的值就是表单组件的data-options设置项
+                            }
+
+                        }
+                    ]],
+                    toolbar: [{
+                        text:'添加',
+                        iconCls: 'icon-add',
+                        handler: function(){
+                            $("#AddInfoValueTable").datagrid('appendRow',{
+                                id:'',
+                                valueName:'',
+                                attrId:attrInfo.id
+                            });
+                        }
+                    },'-',{
+                        text:'删除',
+                        iconCls: 'icon-remove',
+                        handler: function(){
+                            var data = $("#AddInfoValueTable").datagrid('getSelected');
+                            var index = $("#AddInfoValueTable").datagrid('getRowIndex',data);
+                            $("#AddInfoValueTable").datagrid('deleteRow',index);
+                        }
+                    }]
+
+                });
+
+            }else{
+                $.messager.alert("警告","请选择属性");
+            }
+
+        }else{
+            $.messager.alert('警告','请选择三级分类');
+        }
+    }
+    function editAttrInfo(){
+        if(getCatalog3Info()!=null){
+            if(getAttrInfo()!=null){
+                $('#attrDlg').dialog('open');
+                var attrInfo = getAttrInfo();
+                $("#attrId").val(attrInfo.id);
+                $("#attrName").textbox('setValue',attrInfo.attrName);
+
+                $("#attrInfoValueTable").datagrid({
+                    url:'attr/value/'+attrInfo.id,
+                    singleSelect:true,
+                    onDblClickCell:onClickCell1,
+                    columns:[[
+                        {field:'id',title:'属性值id',width:100},
+                        {field:'valueName',title:'属性值名称',width:100,
+                            editor:{
+                                type: 'validatebox', options: { required: true}  //必填项
+                                //options指的是对这个type组件的设置
+                                //type：能写的值就是form里面的表单组件名
+                                //options：能写的值就是表单组件的data-options设置项
+                            }
+
+                        }
+                    ]],
+                    toolbar: [{
+                        text:'添加',
+                        iconCls: 'icon-add',
+                        handler: function(){
+                            $("#attrInfoValueTable").datagrid('appendRow',{
+                                id:'',
+                                valueName:'',
+                                attrId:attrInfo.id
+                            });
+                        }
+                    },'-',{
+                        text:'删除',
+                        iconCls: 'icon-remove',
+                        handler: function(){
+                            var data = $("#attrInfoValueTable").datagrid('getSelected');
+                           var index = $("#attrInfoValueTable").datagrid('getRowIndex',data);
+                            $("#attrInfoValueTable").datagrid('deleteRow',index);
+                        }
+                    }]
+
+                });
+
+
+
+
+            }else{
+                $.messager.alert('警告','请选择属性信息');
+            }
+
+        }else{
+            $.messager.alert('警告','请选择三级分类');
+        }
+
+    }
+    function getCatalog3Info(){
+        var id = $("#ctg3ForAttrList").combobox("getValue");
+        var name = $("#ctg3ForAttrList").combobox("getText");
+        var info = {};
+
+        info={id:id,name:name};
+        if(id==""){return null;}
+        return info;
+    }
+    function getAttrInfo(){
+        return   $('#attrInfoTable').datagrid("getSelected");
+    }
+
+
+
+    /*]]>*/
+</script>
+
+</html>
