@@ -51,7 +51,7 @@ public class CartServiceImpl implements CartService {
                     cartItem.setTotalPrice(cartItem.getTotalPrice());
                     String cartItemJson = JSON.toJSONString(cartItem);
                     jedis.hset(cookieCartKey,skuItem.getId()+"",cartItemJson);
-                
+
                 }
             } else {
                 //非法购物车
